@@ -1,0 +1,13 @@
+---
+- name: copy
+  hosts: test-server
+  become: true
+  become_user: root
+  gather_facts: true
+  tasks:
+    - name: "copy file"
+      copy: src=/home/parvez/Documents/index.html dest=/var/www/html/index.html
+    - name: "copy file"
+      copy: src=/home/parvez/Documents/process.php dest=/var/www/html/process.php
+    - name: "copy file"
+      copy: src=/home/parvez/Documents/result.php dest=/var/www/html/result.php    

@@ -1,0 +1,142 @@
+*** NEEDED TWO MACHINE
+- Ansible control machine
+- Ansible host machine (node)
+
+*** iNSTALLING LAMP STACK
+- Installing Apache server
+- Install PHP
+- Install MySQL
+
+*** Deploying a website
+- Host a website on apache server
+- Use MySQL and PHP to insert and store data entries from webpage
+
+
+*** Ansible Control machine
+
+// already install ansible
+// already SSH connection established between control machine and host machine 
+
+//Write provisioning playbook to install neceessary software to deploy a website host machine/Node machine 
+$ sudo su
+$ cd
+# ansible --version
+# nano /etc/ansible/hosts
+
+[test-server]
+10.0.2.15
+
+# ansible -m ping 'test-server'
+
+# gedit lampstack.yml
+
+
+---
+- name: install apache & php & mysql
+  hosts: test-server
+  become: true                                               [true means that activate privilege escalation mood root user]
+  become_user: root
+  gather_facts: true                                          [gather file]
+  tasks:
+    - name: "Install apache2"
+      package: name=apache2 state=present                     [if delete package state=absent]
+    - name: "Install apache2-php5"
+      package: name=libapache2-mod-php state=present
+    - name: "Install php-cli"
+      package: name=php-cli state=present
+    - name: "Install php-mcrypt"
+      package: name=php-mcrypt state=present
+    - name: "Install php-gd"
+      package: name=php-gd state=present
+    - name: "Install php-mysql"
+      package: name=php-mysql state=present
+    - name: "Install mysqlserver"
+      package: name=mysql-server state=present  
+
+
+# ansible-playbook lampstack.yml
+//ok=8
+//successfully my playbook was run node machine.
+
+
+*** Ansible Host machine
+
+*** check my node machine and see apache has been installed
+
+//go to browser-search(localhost)-Apache2 ubuntu default page (it works)
+
+*** check my node machine and see MySQL has been installed
+
+//go to my terminal
+$ sudo mysql -u root -p
+mysql also successfully has been installed
+
+*** Back to Ansible Control machine
+
+/// Showing first web page
+
+// going to /home/parvez/Documents/
+// index.html  process.php   result.php
+// open first web page (index.html)
+
+/// Creating a database and create a table for name and email data to store into
+
+// creating another playbook
+# gedit mysqlmodule.yml
+
+
+---
+- hosts: all
+  remote_user: root
+  
+  tasks:
+    - name: Install "pip"
+      apt: name=python-pip state=present
+      
+    - name: Install "libmysqlclient-dev"
+      apt: name=libmysqlclient-dev state=present
+      
+    - name: Install the Python MySQLB module
+      pip: name=MySQL-python
+      
+    - name: Create database user parvez
+      mysql_user: user=parvez password=parvez priv=*.*:ALL state=present
+      
+    - name: Create database par
+      mysql_db: db=par state=present
+      
+    - name: Create a Table reg
+      command: mysql -u parvez -pparvez -e 'CREATE TABLE reg (name varchar(30),email varchar(30));' par       
+
+// Go to terminal
+# ansible-palybook mysqlmodule.yml
+
+//ok=7
+//successfully orchestration my playbook was run node machine.
+
+// Deploy Application
+# gedit deploywebsite.yml
+
+---
+- name: copy
+  hosts: test-server
+  become: true
+  become_user: root
+  gather_facts: true
+  tasks:
+    - name: "copy file"
+      copy: src=/home/parvez/Documents/index.html dest=/var/www/html/index.html
+    - name: "copy file"
+      copy: src=/home/parvez/Documents/process.php dest=/var/www/html/process.php
+    - name: "copy file"
+      copy: src=/home/parvez/Documents/result.php dest=/var/www/html/result.php    
+
+// Go to terminal
+# ansible-palybook deploywebsite.yml
+
+*** Back to Ansible Host machine
+
+// Go to my web browser > refresh > get my first web page
+// Application successfully deployed
+// input name (parvez) > email (frparvez9@gmail.com) > add > New record created successfully (that means getting inserted into my database)> Go back > view result 
+// Successfully written playbooks to deploy application, provision node machine using playbook, orchestrated them using playbook.
